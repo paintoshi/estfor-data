@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estfor Active Heroes</title>
+  <style>
+    body, html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #101010;
+    }
+
+    #chart-container {
+      width: 90%;
+      height: 90%;
+      max-width: 90%;
+      max-height: 90%;
+    }
+  </style>
+</head>
+<body>
+  <div id="chart-container">
+    <canvas id="activityChart"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://api.estfor.com/player-day-datas');
+        const data = await response.json();
+        return data?.playerDayDatas?.slice(-30); // Get last 30 days of data
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        return [];
+      }
+    };
+
+    const createChart = (data) => {
+      const ctx = document.getElementById('activityChart').getContext('2d');
+      const activityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.map(item => {
+            // Convert UNIX timestamp to Date object
+            const date = new Date(item.date * 1000);
+            // Format the date to "Jan 12, 2023" format
+            return date.toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' });
+          }),
+          datasets: [
+            {
+              label: 'Heroes Active',
+              data: data.map(item => item.playersActive),
+              backgroundColor: 'rgba(0, 123, 255, 0.5)',
+              borderColor: 'rgba(0, 123, 255, 1)',
+              fill: false,
+            },
+            {
+              label: 'Evolved Heroes Active',
+              data: data.map(item => item.evolvedPlayersActive),
+              backgroundColor: 'rgba(40, 167, 69, 0.5)',
+              borderColor: 'rgba(40, 167, 69, 1)',
+              fill: false,
+            }
+          ]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(240, 240, 240, 0.1)' // Lighter grid lines
+              },
+              ticks: {
+                color: '#ddd' // White text for ticks
+              },
+              title: {
+                display: true,
+                text: 'Active per day',
+                color: '#ddd' // White text for title
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)' // Lighter grid lines
+              },
+              ticks: {
+                color: '#ddd' // White text for ticks
+              },
+              title: {
+                display: true,
+                text: 'Date',
+                color: '#ddd' // White text for title
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#ddd' // White text for legend
+              }
+            }
+          }
+        }
+      });
+    };
+
+    fetchData().then(createChart);
+  </script>
+</body>
+</html>
